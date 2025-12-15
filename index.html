@@ -340,8 +340,11 @@
             "credit-risk-model-stability",
             "sustainable-urban-living",
             "sliot-competition",
-            // "time-series-forecasting",
+            "network-from-scratch ",
+            "time-series-forecasting",
+            "using-machine-learning ",
             "rpal-interpreter"
+            "nanoprocessor",
         ];
 
         const projectDurations = {
@@ -380,7 +383,7 @@
                 repos = repos.filter(repo => {
                     const name = repo.name.toLowerCase();
                     // Check if the repo name matches any allowed project key
-                    return allowedProjects.some(allowed => name.includes(allowed.toLowerCase()));
+                    return allowedProjects //.some(allowed => name.includes(allowed.toLowerCase()));
                 });
 
                 loadingSkeleton.style.display = 'none';
