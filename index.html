@@ -382,6 +382,7 @@
                 // FILTERING: Show ONLY projects in the 'allowedProjects' list
                 repos = repos.filter(repo => {
                     const name = repo.name.toLowerCase();
+                    console.log(name)
                     // Check if the repo name matches any allowed project key
                     return allowedProjects.some(allowed => name.includes(allowed.toLowerCase()));
                 });
