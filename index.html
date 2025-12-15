@@ -43,6 +43,17 @@
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
+        /* Transition for max-height to animate dropdown */
+        .description-content {
+            transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out;
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+        }
+        .description-content.open {
+            max-height: 500px; /* Arbitrary large height */
+            opacity: 1;
+        }
     </style>
 </head>
 <body class="bg-dark text-gray-200 font-sans antialiased selection:bg-primary selection:text-white relative overflow-x-hidden">
@@ -87,6 +98,11 @@
         <div class="container mx-auto px-6">
             <div class="flex flex-col-reverse lg:flex-row items-center gap-12">
                 <div class="lg:w-1/2 text-center lg:text-left">
+                    <div class="inline-block p-1 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 mb-6">
+                        <div class="bg-darker rounded-full p-2 px-4">
+                            <span class="text-sm font-medium">Machine Learning Engineer & Developer</span>
+                        </div>
+                    </div>
                     <h1 class="text-4xl md:text-6xl font-bold mb-6 leading-tight">
                         Hi, I'm <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-600">Rasara Thathsarana</span>
                     </h1>
@@ -329,6 +345,45 @@
         menuBtn.addEventListener('click', () => mobileMenu.classList.toggle('hidden'));
         function toggleMenu() { mobileMenu.classList.add('hidden'); }
 
+        // --- MANUAL PROJECT DURATION MAPPING ---
+        // Edit the values below to match your CV. Keys must loosely match your GitHub repo names (case-insensitive).
+        const projectDurations = {
+            "pan-arctic-feature-detection": "Jun 2025 - Ongoing",
+            "digitization-of-ecg-images": "Nov 2025 - Ongoing",
+            "enhancing-wav2vec2": "Jul 2025 - Oct 2025",
+            "crypto-currency-price-prediction": "Jul 2024 - Nov 2024",
+            "credit-risk-model-stability": "Mar 2024 - May 2024",
+            "sustainable-urban-living": "Feb 2024 - Mar 2024",
+            "smart-wearable": "Dec 2023 - Feb 2024",
+            "rpal-interpreter": "Mar 2024 - May 2024",
+            "default": "Duration: N/A"
+        };
+
+        function getDuration(repoName) {
+            const name = repoName.toLowerCase();
+            for (const key in projectDurations) {
+                if (name.includes(key.toLowerCase())) {
+                    return projectDurations[key];
+                }
+            }
+            return projectDurations['default'];
+        }
+
+        function toggleDescription(btn) {
+            const container = btn.parentElement;
+            const content = container.querySelector('.description-content');
+            const icon = btn.querySelector('i');
+            const isOpen = content.classList.contains('open');
+
+            if (isOpen) {
+                content.classList.remove('open');
+                icon.classList.remove('rotate-180');
+            } else {
+                content.classList.add('open');
+                icon.classList.add('rotate-180');
+            }
+        }
+
         // GitHub API Integration
         async function fetchGitHubProjects() {
             const username = 'RasaraThathsarana';
@@ -336,17 +391,26 @@
             const loadingSkeleton = document.getElementById('loading-skeleton');
             
             try {
-                const response = await fetch(`https://api.github.com/users/${username}/repos?sort=updated&direction=desc&per_page=9`);
+                const response = await fetch(`https://api.github.com/users/${username}/repos?sort=updated&direction=desc&per_page=15`);
                 if (!response.ok) throw new Error('API Error');
-                const repos = await response.json();
+                let repos = await response.json();
                 
+                // FILTERING: Remove 'portfolio' and 'mist'
+                repos = repos.filter(repo => {
+                    const name = repo.name.toLowerCase();
+                    return !name.includes('portfolio') && !name.includes('mist');
+                });
+
                 loadingSkeleton.style.display = 'none';
 
-                const projectsHTML = repos.map(repo => `
+                const projectsHTML = repos.map(repo => {
+                    const duration = getDuration(repo.name);
+                    
+                    return `
                     <article class="bg-gray-800 rounded-xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-700 flex flex-col h-full">
                         <div class="h-40 bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center relative overflow-hidden group shrink-0">
-                            <i class="fas fa-code text-4xl text-gray-500 group-hover:text-primary transition-colors duration-300"></i>
-                            <div class="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                            <!-- Removed the large </> icon as requested -->
+                            <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
                                 <a href="${repo.html_url}" target="_blank" class="text-white text-sm font-bold border border-white px-3 py-1.5 rounded hover:bg-white hover:text-black transition-all">
                                     <i class="fab fa-github mr-1"></i>Code
                                 </a>
@@ -357,22 +421,29 @@
                             </div>
                         </div>
                         <div class="p-6 flex flex-col flex-grow">
-                            <h3 class="text-lg font-bold text-white mb-2 truncate" title="${repo.name}">
-                                ${repo.name.replace(/-/g, ' ').replace(/_/g, ' ')}
-                            </h3>
-                            <p class="text-gray-400 mb-4 text-sm line-clamp-3 flex-grow">
-                                ${repo.description || 'No description provided.'}
-                            </p>
-                            <div class="flex items-center justify-between mt-auto text-xs text-gray-500 border-t border-gray-700 pt-4">
-                                <div class="flex gap-3">
-                                    ${repo.language ? `<span class="flex items-center"><i class="fas fa-circle text-[10px] mr-1 text-primary"></i>${repo.language}</span>` : ''}
-                                    <span class="flex items-center"><i class="far fa-star mr-1"></i>${repo.stargazers_count}</span>
+                            <div class="flex justify-between items-start mb-2">
+                                <h3 class="text-lg font-bold text-white truncate flex-1 pr-2" title="${repo.name}">
+                                    ${repo.name.replace(/-/g, ' ').replace(/_/g, ' ')}
+                                </h3>
+                            </div>
+                            
+                            <!-- Duration Display -->
+                            <div class="text-xs font-semibold text-primary mb-3 bg-primary/10 inline-block px-2 py-1 rounded self-start">
+                                <i class="far fa-calendar-alt mr-1"></i> ${duration}
+                            </div>
+
+                            <!-- Expandable Description -->
+                            <div class="flex-grow relative">
+                                <div class="description-content text-gray-400 text-sm mb-2">
+                                    ${repo.description || 'No description provided.'}
                                 </div>
-                                <span>${new Date(repo.updated_at).toLocaleDateString()}</span>
+                                <button onclick="toggleDescription(this)" class="text-xs text-gray-500 hover:text-white flex items-center gap-1 focus:outline-none mt-1">
+                                    Show Description <i class="fas fa-chevron-down transition-transform duration-300"></i>
+                                </button>
                             </div>
                         </div>
                     </article>
-                `).join('');
+                `}).join('');
 
                 container.innerHTML = projectsHTML;
 
