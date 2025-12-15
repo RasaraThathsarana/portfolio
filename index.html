@@ -161,65 +161,46 @@
         <div class="container mx-auto px-6">
             <h2 class="text-3xl font-bold mb-16 text-center"><span class="border-b-4 border-primary pb-2">My Projects</span></h2>
             
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+            <div id="projects-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
                 
                 <!-- Main Featured Project (GitHub Profile) -->
-                <article class="bg-gray-800 rounded-xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-700">
-                    <div class="h-48 bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center relative overflow-hidden group">
+                <!-- This will remain as the first item or fallback -->
+                <article class="bg-gray-800 rounded-xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-700 flex flex-col h-full">
+                    <div class="h-48 bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center relative overflow-hidden group shrink-0">
                         <i class="fab fa-github text-6xl text-white opacity-50 group-hover:scale-110 transition-transform duration-500"></i>
                         <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                             <span class="text-white font-bold border-2 border-white px-4 py-2 rounded">View Profile</span>
                         </div>
                     </div>
-                    <div class="p-6">
+                    <div class="p-6 flex flex-col flex-grow">
                         <div class="flex justify-between items-center mb-4">
                             <h3 class="text-xl font-bold text-white">GitHub Portfolio</h3>
                             <a href="https://github.com/RasaraThathsarana" target="_blank" class="text-gray-400 hover:text-white"><i class="fas fa-external-link-alt"></i></a>
                         </div>
-                        <p class="text-gray-400 mb-6">
+                        <p class="text-gray-400 mb-6 flex-grow">
                             My central repository collection. Check out all my open source contributions, experimental code, and latest development work here.
                         </p>
-                        <div class="flex flex-wrap gap-2">
+                        <div class="flex flex-wrap gap-2 mt-auto">
                             <span class="px-3 py-1 bg-gray-700 rounded-full text-xs text-blue-300">Open Source</span>
                             <span class="px-3 py-1 bg-gray-700 rounded-full text-xs text-blue-300">Repositories</span>
                         </div>
                     </div>
                 </article>
 
-                <!-- Project Placeholder 1 -->
-                <article class="bg-gray-800 rounded-xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-700">
-                    <div class="h-48 bg-gray-700 flex items-center justify-center">
-                        <i class="fas fa-laptop-code text-5xl text-gray-500"></i>
+                <!-- Dynamic Content Loading State -->
+                <div id="loading-skeleton" class="col-span-1 md:col-span-2 hidden">
+                    <div class="flex items-center justify-center h-full p-8">
+                        <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
                     </div>
-                    <div class="p-6">
-                        <h3 class="text-xl font-bold text-white mb-2">Web Application</h3>
-                        <p class="text-gray-400 mb-6">
-                            A responsive web application built to solve real-world problems. Features modern UI/UX and efficient code structure.
-                        </p>
-                        <div class="flex flex-wrap gap-2">
-                            <span class="px-3 py-1 bg-gray-700 rounded-full text-xs text-green-300">HTML5</span>
-                            <span class="px-3 py-1 bg-gray-700 rounded-full text-xs text-green-300">CSS3</span>
-                        </div>
-                    </div>
-                </article>
+                </div>
 
-                <!-- Project Placeholder 2 -->
-                <article class="bg-gray-800 rounded-xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-700">
-                    <div class="h-48 bg-gray-700 flex items-center justify-center">
-                        <i class="fas fa-mobile text-5xl text-gray-500"></i>
-                    </div>
-                    <div class="p-6">
-                        <h3 class="text-xl font-bold text-white mb-2">Mobile Interface</h3>
-                        <p class="text-gray-400 mb-6">
-                            An intuitive mobile-first interface design focusing on accessibility and speed. Optimized for all devices.
-                        </p>
-                        <div class="flex flex-wrap gap-2">
-                            <span class="px-3 py-1 bg-gray-700 rounded-full text-xs text-purple-300">UI/UX</span>
-                            <span class="px-3 py-1 bg-gray-700 rounded-full text-xs text-purple-300">Responsive</span>
-                        </div>
-                    </div>
-                </article>
-
+            </div>
+            
+            <div class="text-center mt-12">
+                <a href="https://github.com/RasaraThathsarana?tab=repositories" target="_blank" class="inline-flex items-center gap-2 text-gray-400 hover:text-primary transition-colors">
+                    <span>View all repositories on GitHub</span>
+                    <i class="fas fa-arrow-right"></i>
+                </a>
             </div>
         </div>
     </section>
@@ -271,7 +252,7 @@
             mobileMenu.classList.add('hidden');
         }
 
-        // Smooth Scroll for anchor links (if browser doesn't support scroll-behavior: smooth in CSS)
+        // Smooth Scroll
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function (e) {
                 e.preventDefault();
@@ -280,6 +261,84 @@
                 });
             });
         });
+
+        // GitHub API Integration
+        async function fetchGitHubProjects() {
+            const username = 'RasaraThathsarana';
+            const container = document.getElementById('projects-grid');
+            const loadingSkeleton = document.getElementById('loading-skeleton');
+            
+            // Show loading
+            if(loadingSkeleton) loadingSkeleton.classList.remove('hidden');
+
+            try {
+                // Fetch repos sorted by update date
+                const response = await fetch(`https://api.github.com/users/${username}/repos?sort=updated&direction=desc&per_page=12`);
+                
+                if (!response.ok) throw new Error('GitHub API limit exceeded or network error');
+                
+                const repos = await response.json();
+                
+                // Keep the static profile card (first child)
+                const profileCardHTML = container.firstElementChild.outerHTML;
+                
+                // Generate HTML for repos
+                const projectsHTML = repos.map(repo => {
+                    // Skip if it's the profile repo itself if named same as username, but usually okay to show
+                    return `
+                    <article class="bg-gray-800 rounded-xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-700 flex flex-col h-full">
+                        <div class="h-48 bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center relative overflow-hidden group shrink-0">
+                            <i class="fas fa-code text-5xl text-gray-500 group-hover:text-primary transition-colors duration-300"></i>
+                            <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
+                                <a href="${repo.html_url}" target="_blank" class="text-white font-bold border border-white px-4 py-2 rounded-lg hover:bg-white hover:text-black transition-all transform hover:scale-105">
+                                    <i class="fab fa-github mr-2"></i>Code
+                                </a>
+                                ${repo.homepage ? `
+                                <a href="${repo.homepage}" target="_blank" class="text-white font-bold bg-primary border border-primary px-4 py-2 rounded-lg hover:bg-blue-600 transition-all transform hover:scale-105">
+                                    <i class="fas fa-external-link-alt mr-2"></i>Live
+                                </a>` : ''}
+                            </div>
+                        </div>
+                        <div class="p-6 flex flex-col flex-grow">
+                            <h3 class="text-xl font-bold text-white mb-2 truncate" title="${repo.name}">
+                                ${repo.name.replace(/-/g, ' ').replace(/_/g, ' ')}
+                            </h3>
+                            <p class="text-gray-400 mb-4 text-sm line-clamp-3 flex-grow">
+                                ${repo.description || 'No description provided.'}
+                            </p>
+                            <div class="flex items-center justify-between mt-auto text-xs text-gray-500 border-t border-gray-700 pt-4">
+                                <div class="flex gap-3">
+                                    ${repo.language ? `<span class="flex items-center"><i class="fas fa-circle text-[10px] mr-1 text-primary"></i>${repo.language}</span>` : ''}
+                                    <span class="flex items-center"><i class="far fa-star mr-1"></i>${repo.stargazers_count}</span>
+                                </div>
+                                <span>${new Date(repo.updated_at).toLocaleDateString()}</span>
+                            </div>
+                        </div>
+                    </article>
+                    `;
+                }).join('');
+
+                // Update container: Profile Card + New Projects
+                container.innerHTML = profileCardHTML + projectsHTML;
+
+            } catch (error) {
+                console.error('Error fetching projects:', error);
+                // On error, we keep the static content or show a simple error message
+                // Currently the static content (Profile Card + placeholders if we had them) remains if we don't overwrite
+                // But here I'm planning to overwrite. 
+                // Let's just append a fallback message if it fails, or leave the static card only.
+                const profileCardHTML = container.firstElementChild.outerHTML;
+                container.innerHTML = profileCardHTML + `
+                    <div class="col-span-full text-center py-10 text-gray-400">
+                        <p>Could not load projects dynamically.</p>
+                        <a href="https://github.com/${username}?tab=repositories" class="text-primary hover:underline">View on GitHub</a>
+                    </div>
+                `;
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', fetchGitHubProjects);
     </script>
 </body>
 </html>
